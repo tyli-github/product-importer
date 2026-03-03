@@ -27,3 +27,28 @@ docker-compose --env-file .env.local up -d # use local environment variables
 php bin/console doctrine:migrations:migrate
 php bin/console import:products data.csv
 ```
+
+## Testing
+
+### One-time setup
+
+Create `.env.test.local` (gitignored) with credentials for a dedicated test database:
+
+```dotenv
+DATABASE_URL="postgresql://<user>:<pass>@127.0.0.1:5432/product_importer_test?serverVersion=16&charset=utf8"
+```
+
+Create the test database and run migrations:
+
+```bash
+docker-compose exec -T database psql -U <user> -d product_importer -c "CREATE DATABASE product_importer_test;"
+APP_ENV=test php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+### Running tests
+
+```bash
+vendor/bin/phpunit                        # all tests
+vendor/bin/phpunit tests/Service/         # unit tests only
+vendor/bin/phpunit tests/Command/         # integration tests only
+```
