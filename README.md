@@ -12,21 +12,15 @@ Built with Doctrine ORM, PostgreSQL, and Symfony Messenger for async processing.
 - **PHP**: 8.4+
 
 ## Quick Start
-Create `.env.local` file with the following content:
-
-```dotenv
-DATABASE_URL="postgresql://<your_username>:<your_password>@127.0.0.1:5432/product_importer?serverVersion=16&charset=utf8"
-POSTGRES_DB=product_importer
-POSTGRES_USER=<your_username>
-POSTGRES_PASSWORD=<your_password>
-```
 
 ```bash
 composer install
-docker-compose --env-file .env.local up -d # use local environment variables
+docker-compose up -d
 php bin/console doctrine:migrations:migrate
 php bin/console import:products data.csv
 ```
+
+Note: Docker credentials are configured in `docker-compose.override.yaml` (not committed).
 
 ## Testing
 
@@ -41,7 +35,7 @@ DATABASE_URL="postgresql://<user>:<pass>@127.0.0.1:5432/product_importer_test?se
 Create the test database and run migrations:
 
 ```bash
-docker-compose exec -T database psql -U <user> -d product_importer -c "CREATE DATABASE product_importer_test;"
+docker-compose exec database psql -U <user> -d product_importer -c "CREATE DATABASE product_importer_test;"
 APP_ENV=test php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
