@@ -5,11 +5,18 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\ImportJobRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ImportJobRepository::class)]
 class ImportJob
 {
+    public const string SOURCE_TYPE_CSV = 'csv';
+
+    public const string STATUS_COMPLETED = 'completed';
+
+    public const string STATUS_RUNNING = 'running';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -37,14 +44,14 @@ class ImportJob
     private ?int $failedRows = null;
 
     #[ORM\Column]
-    private \DateTimeImmutable $startedAt;
+    private DateTimeImmutable $startedAt;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $completedAt = null;
+    private ?DateTimeImmutable $completedAt = null;
 
     public function __construct()
     {
-        $this->startedAt = new \DateTimeImmutable();
+        $this->startedAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -136,17 +143,17 @@ class ImportJob
         return $this;
     }
 
-    public function getStartedAt(): \DateTimeImmutable
+    public function getStartedAt(): DateTimeImmutable
     {
         return $this->startedAt;
     }
 
-    public function getCompletedAt(): ?\DateTimeImmutable
+    public function getCompletedAt(): ?DateTimeImmutable
     {
         return $this->completedAt;
     }
 
-    public function setCompletedAt(?\DateTimeImmutable $completedAt): static
+    public function setCompletedAt(?DateTimeImmutable $completedAt): static
     {
         $this->completedAt = $completedAt;
 
