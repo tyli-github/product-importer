@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Entity\ImportJob;
-use App\Entity\Product;
-use App\Repository\ProductRepository;
 use App\Service\CsvReaderService;
 use App\Service\ImportLogService;
 use App\Service\ProductImportService;
+use App\Service\ProductValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Component\Validator\ConstraintViolation;
-use Symfony\Component\Validator\ConstraintViolationList;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ProductImportServiceTest extends TestCase
 {
@@ -26,9 +22,7 @@ class ProductImportServiceTest extends TestCase
 
     private EntityManagerInterface&MockObject $entityManager;
 
-    private ValidatorInterface&Stub $validator;
-
-    private ProductRepository&Stub $repository;
+    private ProductValidator&Stub $productValidator;
 
     private ImportLogService&Stub $importLogService;
 
@@ -40,21 +34,19 @@ class ProductImportServiceTest extends TestCase
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->managerRegistry = $this->createStub(ManagerRegistry::class);
-        $this->validator = $this->createStub(ValidatorInterface::class);
-        $this->repository = $this->createStub(ProductRepository::class);
+        $this->productValidator = $this->createStub(ProductValidator::class);
         $this->importLogService = $this->createStub(ImportLogService::class);
         $this->csvReader = new CsvReaderService(new NullLogger());
         $this->tmpDir = sys_get_temp_dir();
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
-        $this->entityManager->method('getRepository')->willReturn($this->repository);
     }
 
     private function makeService(): ProductImportService
     {
         return new ProductImportService(
             $this->managerRegistry,
-            $this->validator,
+            $this->productValidator,
             $this->csvReader,
             new NullLogger(),
             $this->importLogService,
@@ -83,8 +75,8 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\nWidget B,SKU-002,19.99\n");
 
-        $this->validator->method('validate')->willReturn(new ConstraintViolationList());
-        $this->repository->method('findOneBy')->willReturn(null);
+        $this->productValidator->method('validate')->willReturn([]);
+        $this->productValidator->method('isSkuTaken')->willReturn(false);
         $this->entityManager->expects($this->exactly(2))->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
@@ -101,9 +93,7 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\n,INVALID,bad\n");
 
-        $violation = new ConstraintViolation('This value should not be blank.', null, [], null, 'name', null);
-        $violations = new ConstraintViolationList([$violation]);
-        $this->validator->method('validate')->willReturn($violations);
+        $this->productValidator->method('validate')->willReturn(['name: This value should not be blank.']);
 
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
@@ -118,8 +108,8 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\n");
 
-        $this->validator->method('validate')->willReturn(new ConstraintViolationList());
-        $this->repository->method('findOneBy')->willReturn(null);
+        $this->productValidator->method('validate')->willReturn([]);
+        $this->productValidator->method('isSkuTaken')->willReturn(false);
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
@@ -132,7 +122,6 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\n,,\n");
 
-        $this->validator->method('validate')->willReturn(new ConstraintViolationList());
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
@@ -146,10 +135,8 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\n");
 
-        $this->validator->method('validate')->willReturn(new ConstraintViolationList());
-
-        $this->repository->method('findOneBy')->willReturn(new Product());
-
+        $this->productValidator->method('validate')->willReturn([]);
+        $this->productValidator->method('isSkuTaken')->willReturn(true);
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
@@ -163,8 +150,8 @@ class ProductImportServiceTest extends TestCase
     {
         $path = $this->writeCsv("name,sku,price\nGood,SKU-001,5.00\n,,\n");
 
-        $this->validator->method('validate')->willReturn(new ConstraintViolationList());
-        $this->repository->method('findOneBy')->willReturn(null);
+        $this->productValidator->method('validate')->willReturn([]);
+        $this->productValidator->method('isSkuTaken')->willReturn(false);
         $this->entityManager->expects($this->once())->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 

@@ -14,7 +14,6 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ProductImportService
 {
@@ -22,7 +21,7 @@ class ProductImportService
 
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
-        private readonly ValidatorInterface $validator,
+        private readonly ProductValidator $productValidator,
         private readonly CsvReaderService $csvReader,
         private readonly LoggerInterface $logger,
         private readonly ImportLogService $importLogService,
@@ -140,7 +139,7 @@ class ProductImportService
             return ImportRowDecision::skip();
         }
 
-        $errors = $this->getValidationErrors($importRow->getProduct());
+        $errors = $this->productValidator->validate($importRow->getProduct());
         if ($errors !== []) {
             if ($context->isDryRun() === false) {
                 $this->importLogService->create(
@@ -161,6 +160,7 @@ class ProductImportService
         }
 
         if ($sku = $importRow->getSku()) {
+            // skip the product if sku has already been checked in the current import
             if ($context->hasProcessedSku($sku)) {
                 $this->logger->info('Skipped duplicate SKU', [
                     'row' => $importRow->getRowNumber(),
@@ -169,8 +169,9 @@ class ProductImportService
 
                 return ImportRowDecision::skip();
             }
-            $productExist = $this->getEntityManager()->getRepository(Product::class)->findOneBy(['sku' => $sku]) !== null;
-            if ($productExist === true) {
+
+            // skip product if sku already exist. note this requires a db connection check
+            if ($this->productValidator->isSkuTaken($sku)) {
                 $this->logger->info('Skipped existing SKU in database', [
                     'row' => $importRow->getRowNumber(),
                     'sku' => $sku,
@@ -187,20 +188,6 @@ class ProductImportService
         }
 
         return ImportRowDecision::batch($importRow->getProduct());
-    }
-
-    private function getValidationErrors(Product $product): array
-    {
-        $errors = $this->validator->validate($product);
-
-        $messages = [];
-        if (count($errors) > 0) {
-            foreach ($errors as $error) {
-                $messages[] = $error->getPropertyPath() . ': ' . $error->getMessage();
-            }
-        }
-
-        return $messages;
     }
 
     private function isSkippable(ProductImportRow $importRow): bool
