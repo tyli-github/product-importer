@@ -15,6 +15,8 @@ class ImportJob
 
     public const string STATUS_COMPLETED = 'completed';
 
+    public const string STATUS_FAILED = 'failed';
+
     public const string STATUS_RUNNING = 'running';
 
     #[ORM\Id]
