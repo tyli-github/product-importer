@@ -19,5 +19,25 @@ services:
     App\:
         resource: '../src/'
 
+    _instanceof:
+        App\Interface\ImportReaderInterface:
+            tags: ['import.reader']
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@test:
+    services:
+        _defaults:
+            autowire: true
+            autoconfigure: true
+
+        App\Service\Reader\CsvImportReader:
+            public: true
+            tags: ['import.reader']
+        App\Service\Reader\JsonImportReader:
+            public: true
+            tags: ['import.reader']
+        App\Service\Reader\HttpImportReader:
+            public: true
+            tags: ['import.reader']

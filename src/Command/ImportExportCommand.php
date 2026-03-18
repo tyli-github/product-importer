@@ -18,7 +18,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class ImportExportCommand extends Command
 {
-    private const string DEFAULT_OUTPUT_DIR = 'var/share';
+    private const string DEFAULT_OUTPUT_DIR = 'var/share/export';
 
     public function __construct(private readonly ProductExportService $exportService)
     {

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Entity\ImportJob;
-use App\Service\CsvReaderService;
+use App\Interface\ImportReaderInterface;
 use App\Service\ImportLogService;
 use App\Service\ProductImportService;
 use App\Service\ProductValidator;
+use App\Service\Reader\CsvImportReader;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -26,7 +27,7 @@ class ProductImportServiceTest extends TestCase
 
     private ImportLogService&Stub $importLogService;
 
-    private CsvReaderService $csvReader;
+    private ImportReaderInterface $reader;
 
     private string $tmpDir;
 
@@ -36,7 +37,7 @@ class ProductImportServiceTest extends TestCase
         $this->managerRegistry = $this->createStub(ManagerRegistry::class);
         $this->productValidator = $this->createStub(ProductValidator::class);
         $this->importLogService = $this->createStub(ImportLogService::class);
-        $this->csvReader = new CsvReaderService(new NullLogger());
+        $this->reader = new CsvImportReader(new NullLogger());
         $this->tmpDir = sys_get_temp_dir();
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
@@ -47,7 +48,7 @@ class ProductImportServiceTest extends TestCase
         return new ProductImportService(
             $this->managerRegistry,
             $this->productValidator,
-            $this->csvReader,
+            $this->reader,
             new NullLogger(),
             $this->importLogService,
         );

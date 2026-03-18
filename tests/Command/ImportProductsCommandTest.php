@@ -66,7 +66,7 @@ class ImportProductsCommandTest extends KernelTestCase
         $code = $this->commandTester->execute(['file' => '/nonexistent/file.csv']);
 
         $this->assertSame(1, $code);
-        $this->assertStringContainsString('File not found', $this->commandTester->getDisplay());
+        $this->assertStringContainsString('No reader supports the source', $this->commandTester->getDisplay());
     }
 
     public function testDryRunDoesNotPersistProducts(): void

@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Exception\CsvReaderException;
-use App\Service\CsvReaderService;
+use App\Service\Reader\CsvImportReader;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class CsvReaderServiceTest extends TestCase
+class CsvImportReaderTest extends TestCase
 {
-    private CsvReaderService $reader;
+    private CsvImportReader $reader;
 
     private string $tmpDir;
 
     protected function setUp(): void
     {
-        $this->reader = new CsvReaderService(new NullLogger());
+        $this->reader = new CsvImportReader(new NullLogger());
         $this->tmpDir = sys_get_temp_dir();
     }
 
@@ -70,7 +70,6 @@ class CsvReaderServiceTest extends TestCase
 
     public function testSkipsRowsWithColumnCountMismatch(): void
     {
-        // Row 2 has 2 columns instead of 3
         $path = $this->writeCsv("name,sku,price\nBad Row,SKU-BAD\nGood Row,SKU-001,5.00\n");
 
         $rows = iterator_to_array($this->reader->read($path));
@@ -94,8 +93,28 @@ class CsvReaderServiceTest extends TestCase
 
         $rows = iterator_to_array($this->reader->read($path));
 
-        // Header is row 1, data starts at row 2
         $this->assertArrayHasKey(2, $rows);
         $this->assertArrayHasKey(3, $rows);
+    }
+
+    public function testSupportsCsvByExtension(): void
+    {
+        $path = $this->writeCsv("name,sku\n");
+
+        $this->assertTrue($this->reader->supports($path));
+    }
+
+    public function testDoesNotSupportJsonExtension(): void
+    {
+        $path = $this->tmpDir . '/test_' . uniqid() . '.json';
+        file_put_contents($path, '[]');
+
+        $this->assertFalse($this->reader->supports($path));
+    }
+
+    public function testDoesNotSupportHttpUrlEvenWithCsvExtension(): void
+    {
+        $this->assertFalse($this->reader->supports('https://example.com/products.csv'));
+        $this->assertFalse($this->reader->supports('http://example.com/products.csv'));
     }
 }

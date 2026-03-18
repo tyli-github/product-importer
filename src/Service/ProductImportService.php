@@ -10,6 +10,7 @@ use App\DTO\ProductImportContext;
 use App\DTO\ProductImportRow;
 use App\Entity\ImportJob;
 use App\Entity\Product;
+use App\Interface\ImportReaderInterface;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -22,7 +23,7 @@ class ProductImportService
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
         private readonly ProductValidator $productValidator,
-        private readonly CsvReaderService $csvReader,
+        private readonly ImportReaderInterface $reader,
         private readonly LoggerInterface $logger,
         private readonly ImportLogService $importLogService,
     ) {
@@ -41,7 +42,7 @@ class ProductImportService
         $batch = [];
         $context = new ProductImportContext($dryRun);
 
-        foreach ($this->csvReader->read($filePath) as $rowNumber => $row) {
+        foreach ($this->reader->read($filePath) as $rowNumber => $row) {
             if ($onProgress !== null) {
                 ($onProgress)();
             }

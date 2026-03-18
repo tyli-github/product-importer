@@ -13,6 +13,10 @@ class ImportJob
 {
     public const string SOURCE_TYPE_CSV = 'csv';
 
+    public const string SOURCE_TYPE_JSON = 'json';
+
+    public const string SOURCE_TYPE_HTTP = 'http';
+
     public const string STATUS_COMPLETED = 'completed';
 
     public const string STATUS_FAILED = 'failed';
