@@ -10,6 +10,7 @@ readonly class ImportProductsMessage
         public int $jobId,
         public string $source,
         public bool $dryRun = false,
+        public bool $allowUpdates = false,
     ) {
     }
 }

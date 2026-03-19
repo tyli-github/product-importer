@@ -35,6 +35,7 @@ readonly class ImportJobService
         $job->setCompletedAt(new DateTimeImmutable());
         $job->setProcessedRows($result->processed);
         $job->setFailedRows($result->failed);
+        $job->setUpdatedRows($result->updated);
         $job->setTotalRows($result->total());
 
         $this->entityManager->flush();

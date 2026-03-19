@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DTO;
 
 use App\Entity\Product;
+use LogicException;
 
 final class ImportRowDecision
 {
@@ -15,6 +16,8 @@ final class ImportRowDecision
     private const string TYPE_DRY_RUN_PROCESSED = 'dry_run_processed';
 
     private const string TYPE_BATCH = 'batch';
+
+    private const string TYPE_UPDATE = 'update';
 
     private function __construct(private readonly string $type, private readonly ?Product $product = null) {}
 
@@ -38,6 +41,11 @@ final class ImportRowDecision
         return new self(self::TYPE_BATCH, $product);
     }
 
+    public static function update(Product $product): self
+    {
+        return new self(self::TYPE_UPDATE, $product);
+    }
+
     public function isSkip(): bool
     {
         return $this->type === self::TYPE_SKIP;
@@ -58,10 +66,15 @@ final class ImportRowDecision
         return $this->type === self::TYPE_BATCH;
     }
 
+    public function isUpdate(): bool
+    {
+        return $this->type === self::TYPE_UPDATE;
+    }
+
     public function getProduct(): Product
     {
         if ($this->product === null) {
-            throw new \LogicException('No product is available for this import row decision.');
+            throw new LogicException('No product is available for this import row decision.');
         }
 
         return $this->product;

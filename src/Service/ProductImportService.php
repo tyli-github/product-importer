@@ -12,6 +12,7 @@ use App\Entity\ImportJob;
 use App\Entity\Product;
 use App\Event\ProductImportedEvent;
 use App\Interface\ImportReaderInterface;
+use App\Repository\ProductRepository;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -25,6 +26,7 @@ class ProductImportService
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
         private readonly ProductValidator $productValidator,
+        private readonly ProductRepository $productRepository,
         private readonly ImportReaderInterface $reader,
         private readonly LoggerInterface $logger,
         private readonly ImportLogService $importLogService,
@@ -32,13 +34,13 @@ class ProductImportService
     ) {
     }
 
-    public function import(string $filePath, ImportJob $job, bool $dryRun = false): ImportResult
+    public function import(string $filePath, ImportJob $job, ProductImportContext $context): ImportResult
     {
         $processed = 0;
         $failed = 0;
         $skipped = 0;
+        $updated = 0;
         $batch = [];
-        $context = new ProductImportContext($dryRun);
 
         foreach ($this->reader->read($filePath) as $rowNumber => $row) {
             // product DTO: used to simplify data handling for this class
@@ -64,42 +66,47 @@ class ProductImportService
                 continue;
             }
 
-            $batch[] = [
-                'rowNumber' => $importRow->getRowNumber(),
-                'row' => $importRow->getRaw(),
-                'product' => $decision->getProduct(),
-            ];
+            if ($decision->isUpdate()) {
+                $updated++;
+            } else {
+                $processed++;
+            }
+
+            $batch[] = $decision;
 
             if (count($batch) === self::BATCH_SIZE) {
-                $this->processBatch($batch, $job, $processed);
+                $this->processBatch($batch, $job);
                 $batch = [];
             }
         }
 
         if ($context->isDryRun() === false && $batch !== []) {
-            $this->processBatch($batch, $job, $processed);
+            $this->processBatch($batch, $job);
         }
 
-        return new ImportResult($processed, $failed, $skipped);
+        return new ImportResult($processed, $failed, $skipped, $updated);
     }
 
-    private function processBatch(array $batch, ImportJob $job, int &$processed): void
+    /**
+     * @param array<int, ImportRowDecision> $batch
+     */
+    private function processBatch(array $batch, ImportJob $job): void
     {
         $entityManager = $this->getEntityManager();
 
         try {
-            foreach ($batch as $item) {
-                $entityManager->persist($item['product']);
+            foreach ($batch as $decision) {
+                if (!$decision->isUpdate()) {
+                    $entityManager->persist($decision->getProduct());
+                }
             }
 
             $entityManager->flush();
 
-            foreach ($batch as $item) {
-                $this->eventDispatcher->dispatch(new ProductImportedEvent($item['product']));
-                $entityManager->detach($item['product']);
+            foreach ($batch as $decision) {
+                $this->eventDispatcher->dispatch(new ProductImportedEvent($decision->getProduct()));
+                $entityManager->detach($decision->getProduct());
             }
-
-            $processed += count($batch);
         } catch (DbalException $exception) {
             $message = sprintf('Database error during import: %s', $exception->getMessage());
             $context = [
@@ -167,14 +174,9 @@ class ProductImportService
                 return ImportRowDecision::skip();
             }
 
-            // skip product if sku already exist. note this requires a db connection check
-            if ($this->productValidator->isSkuTaken($sku)) {
-                $this->logger->info('Skipped existing SKU in database', [
-                    'row' => $importRow->getRowNumber(),
-                    'sku' => $sku,
-                ]);
-
-                return ImportRowDecision::skip();
+            $decision = $this->handleExistingSku($sku, $importRow, $context);
+            if ($decision !== null) {
+                return $decision;
             }
 
             $context->markSkuAsProcessed($sku);
@@ -185,6 +187,48 @@ class ProductImportService
         }
 
         return ImportRowDecision::batch($importRow->getProduct());
+    }
+
+    private function handleExistingSku(string $sku, ProductImportRow $importRow, ProductImportContext $context): ?ImportRowDecision
+    {
+        $existingProduct = $this->productRepository->findBySku($sku);
+        if ($existingProduct === null) {
+            return null;
+        }
+
+        if (!$context->isAllowUpdates()) {
+            $this->logger->info('Skipped existing SKU in database', [
+                'row' => $importRow->getRowNumber(),
+                'sku' => $sku,
+            ]);
+
+            return ImportRowDecision::skip();
+        }
+
+        $this->mergeProductData($existingProduct, $importRow->getProduct());
+        $this->logger->info('Updating existing SKU', [
+            'row' => $importRow->getRowNumber(),
+            'sku' => $sku,
+        ]);
+
+        $context->markSkuAsProcessed($sku);
+
+        if ($context->isDryRun()) {
+            return ImportRowDecision::dryRunProcessed();
+        }
+
+        return ImportRowDecision::update($existingProduct);
+    }
+
+    private function mergeProductData(Product $existing, Product $new): void
+    {
+        $existing->setName($new->getName());
+        $existing->setPrice($new->getPrice());
+        $existing->setDescription($new->getDescription());
+        $existing->setCategory($new->getCategory());
+        $existing->setStock($new->getStock());
+        $existing->setStatus($new->getStatus());
+        $existing->setUpdatedAt(new \DateTimeImmutable());
     }
 
     private function isSkippable(ProductImportRow $importRow): bool

@@ -13,12 +13,18 @@ final class ProductImportContext
 
     public function __construct(
         private readonly bool $dryRun,
+        private readonly bool $allowUpdates = false,
     ) {
     }
 
     public function isDryRun(): bool
     {
         return $this->dryRun;
+    }
+
+    public function isAllowUpdates(): bool
+    {
+        return $this->allowUpdates;
     }
 
     public function hasProcessedSku(string $sku): bool

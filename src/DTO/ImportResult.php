@@ -10,10 +10,11 @@ readonly class ImportResult
         public int $processed,
         public int $failed,
         public int $skipped,
+        public int $updated = 0,
     ) {}
 
     public function total(): int
     {
-        return $this->processed + $this->failed + $this->skipped;
+        return $this->processed + $this->failed + $this->skipped + $this->updated;
     }
 }

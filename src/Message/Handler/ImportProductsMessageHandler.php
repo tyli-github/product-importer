@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Message\Handler;
 
+use App\DTO\ProductImportContext;
 use App\Entity\ImportJob;
 use App\Event\ImportCompletedEvent;
 use App\Message\ImportProductsMessage;
+use App\Repository\ProductRepository;
 use App\Service\ImportJobService;
 use App\Service\ImportLogService;
 use App\Service\ImportSourceDetector;
@@ -33,6 +35,7 @@ readonly class ImportProductsMessageHandler
         private ImportJobService $jobService,
         private ImportLogService $importLogService,
         private ProductValidator $productValidator,
+        private ProductRepository $productRepository,
         private ImportSourceDetector $sourceDetector,
         private LoggerInterface $logger,
         private EventDispatcherInterface $eventDispatcher,
@@ -59,16 +62,19 @@ readonly class ImportProductsMessageHandler
                 throw new RuntimeException(sprintf('No reader supports the source: %s', $message->source));
             }
 
+            $context = new ProductImportContext($message->dryRun, $message->allowUpdates);
+
             $importService = new ProductImportService(
                 $this->managerRegistry,
                 $this->productValidator,
+                $this->productRepository,
                 $reader,
                 $this->logger,
                 $this->importLogService,
                 $this->eventDispatcher,
             );
 
-            $result = $importService->import($message->source, $job, $message->dryRun);
+            $result = $importService->import($message->source, $job, $context);
 
             $this->jobService->updateJobResults($job, $result);
 
@@ -78,6 +84,8 @@ readonly class ImportProductsMessageHandler
                 'jobId' => $message->jobId,
                 'processed' => $result->processed,
                 'failed' => $result->failed,
+                'skipped' => $result->skipped,
+                'updated' => $result->updated,
             ]);
         } catch (Throwable $e) {
             $job->setStatus(ImportJob::STATUS_FAILED);

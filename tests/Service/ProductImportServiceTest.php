@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\DTO\ProductImportContext;
 use App\Entity\ImportJob;
 use App\Event\ProductImportedEvent;
 use App\Interface\ImportReaderInterface;
+use App\Repository\ProductRepository;
 use App\Service\ImportLogService;
 use App\Service\ProductImportService;
 use App\Service\ProductValidator;
@@ -27,6 +29,8 @@ class ProductImportServiceTest extends TestCase
 
     private ProductValidator&Stub $productValidator;
 
+    private ProductRepository&Stub $productRepository;
+
     private ImportLogService&Stub $importLogService;
 
     private EventDispatcherInterface $eventDispatcher;
@@ -40,6 +44,7 @@ class ProductImportServiceTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->managerRegistry = $this->createStub(ManagerRegistry::class);
         $this->productValidator = $this->createStub(ProductValidator::class);
+        $this->productRepository = $this->createStub(ProductRepository::class);
         $this->importLogService = $this->createStub(ImportLogService::class);
         $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $this->reader = new CsvImportReader(new NullLogger());
@@ -53,6 +58,7 @@ class ProductImportServiceTest extends TestCase
         return new ProductImportService(
             $this->managerRegistry,
             $this->productValidator,
+            $this->productRepository,
             $this->reader,
             new NullLogger(),
             $this->importLogService,
@@ -78,16 +84,21 @@ class ProductImportServiceTest extends TestCase
         return $job;
     }
 
+    private function makeContext(bool $dryRun = false, bool $allowUpdates = false): ProductImportContext
+    {
+        return new ProductImportContext($dryRun, $allowUpdates);
+    }
+
     public function testImportsValidRowsSuccessfully(): void
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\nWidget B,SKU-002,19.99\n");
 
         $this->productValidator->method('validate')->willReturn([]);
-        $this->productValidator->method('isSkuTaken')->willReturn(false);
+        $this->productRepository->method('findBySku')->willReturn(null);
         $this->entityManager->expects($this->exactly(2))->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob());
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(2, $result->processed);
         $this->assertSame(0, $result->failed);
@@ -104,7 +115,7 @@ class ProductImportServiceTest extends TestCase
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob());
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(0, $result->processed);
         $this->assertSame(1, $result->failed);
@@ -115,11 +126,11 @@ class ProductImportServiceTest extends TestCase
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\n");
 
         $this->productValidator->method('validate')->willReturn([]);
-        $this->productValidator->method('isSkuTaken')->willReturn(false);
+        $this->productRepository->method('findBySku')->willReturn(null);
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob(), dryRun: true);
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext(dryRun: true));
 
         $this->assertSame(1, $result->processed);
     }
@@ -131,7 +142,7 @@ class ProductImportServiceTest extends TestCase
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob());
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(0, $result->processed);
         $this->assertSame(1, $result->skipped);
@@ -142,11 +153,13 @@ class ProductImportServiceTest extends TestCase
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\n");
 
         $this->productValidator->method('validate')->willReturn([]);
-        $this->productValidator->method('isSkuTaken')->willReturn(true);
+        // Simulate product already exists in database
+        $existingProduct = $this->createStub(\App\Entity\Product::class);
+        $this->productRepository->method('findBySku')->willReturn($existingProduct);
         $this->entityManager->expects($this->never())->method('persist');
         $this->entityManager->expects($this->never())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob());
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(0, $result->processed);
         $this->assertSame(1, $result->skipped);
@@ -157,11 +170,11 @@ class ProductImportServiceTest extends TestCase
         $path = $this->writeCsv("name,sku,price\nGood,SKU-001,5.00\n,,\n");
 
         $this->productValidator->method('validate')->willReturn([]);
-        $this->productValidator->method('isSkuTaken')->willReturn(false);
+        $this->productRepository->method('findBySku')->willReturn(null);
         $this->entityManager->expects($this->once())->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
-        $result = $this->makeService()->import($path, $this->makeJob());
+        $result = $this->makeService()->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(2, $result->total());
         $this->assertSame(1, $result->processed);
@@ -173,7 +186,7 @@ class ProductImportServiceTest extends TestCase
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\nWidget B,SKU-002,19.99\n");
 
         $this->productValidator->method('validate')->willReturn([]);
-        $this->productValidator->method('isSkuTaken')->willReturn(false);
+        $this->productRepository->method('findBySku')->willReturn(null);
         $this->entityManager->expects($this->exactly(2))->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
@@ -186,13 +199,14 @@ class ProductImportServiceTest extends TestCase
         $service = new ProductImportService(
             $this->managerRegistry,
             $this->productValidator,
+            $this->productRepository,
             $this->reader,
             new NullLogger(),
             $this->importLogService,
             $mockDispatcher,
         );
 
-        $result = $service->import($path, $this->makeJob());
+        $result = $service->import($path, $this->makeJob(), $this->makeContext());
 
         $this->assertSame(2, $result->processed);
     }

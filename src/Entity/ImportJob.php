@@ -51,6 +51,9 @@ class ImportJob
     #[ORM\Column(nullable: true)]
     private ?int $failedRows = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $updatedRows = null;
+
     #[ORM\Column]
     private DateTimeImmutable $startedAt;
 
@@ -147,6 +150,18 @@ class ImportJob
     public function setFailedRows(?int $failedRows): static
     {
         $this->failedRows = $failedRows;
+
+        return $this;
+    }
+
+    public function getUpdatedRows(): ?int
+    {
+        return $this->updatedRows;
+    }
+
+    public function setUpdatedRows(?int $updatedRows): static
+    {
+        $this->updatedRows = $updatedRows;
 
         return $this;
     }

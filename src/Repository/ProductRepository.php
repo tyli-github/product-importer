@@ -15,4 +15,14 @@ class ProductRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Product::class);
     }
+
+    public function findBySku(string $sku): ?Product
+    {
+        return $this->findOneBy(['sku' => $sku]);
+    }
+
+    public function skuExists(string $sku): bool
+    {
+        return $this->findBySku($sku) !== null;
+    }
 }

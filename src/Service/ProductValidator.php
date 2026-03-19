@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Product;
-use App\Repository\ProductRepository;
-use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 readonly class ProductValidator
 {
-    public function __construct(
-        private ValidatorInterface $validator,
-        private ManagerRegistry $managerRegistry,
-    ) {
+    public function __construct(private ValidatorInterface $validator)
+    {
     }
 
     /**
@@ -30,13 +26,5 @@ readonly class ProductValidator
         }
 
         return $messages;
-    }
-
-    public function isSkuTaken(string $sku): bool
-    {
-        /** @var ProductRepository $repository */
-        $repository = $this->managerRegistry->getManager()->getRepository(Product::class);
-
-        return $repository->findOneBy(['sku' => $sku]) !== null;
     }
 }

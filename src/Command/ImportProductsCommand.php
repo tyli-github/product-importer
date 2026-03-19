@@ -38,6 +38,7 @@ class ImportProductsCommand extends Command
         $this
             ->addArgument('file', InputArgument::REQUIRED, 'Path to file or HTTP URL')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Validate only, do not persist')
+            ->addOption('allow-updates', null, InputOption::VALUE_NONE, 'Update existing products by SKU instead of skipping')
         ;
     }
 
@@ -46,6 +47,7 @@ class ImportProductsCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $source = $input->getArgument('file');
         $dryRun = $input->getOption('dry-run');
+        $allowUpdates = $input->getOption('allow-updates');
 
         $reader = $this->sourceDetector->detect($source, $this->readers);
         if ($reader === null) {
@@ -60,6 +62,7 @@ class ImportProductsCommand extends Command
             jobId: $job->getId(),
             source: $source,
             dryRun: $dryRun,
+            allowUpdates: $allowUpdates,
         ));
 
         $io->success(sprintf('Import queued (Job ID: %d)', $job->getId()));
