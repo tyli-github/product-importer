@@ -10,11 +10,13 @@ use App\DTO\ProductImportContext;
 use App\DTO\ProductImportRow;
 use App\Entity\ImportJob;
 use App\Entity\Product;
+use App\Event\ProductImportedEvent;
 use App\Interface\ImportReaderInterface;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ProductImportService
 {
@@ -26,6 +28,7 @@ class ProductImportService
         private readonly ImportReaderInterface $reader,
         private readonly LoggerInterface $logger,
         private readonly ImportLogService $importLogService,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -92,6 +95,7 @@ class ProductImportService
             $entityManager->flush();
 
             foreach ($batch as $item) {
+                $this->eventDispatcher->dispatch(new ProductImportedEvent($item['product']));
                 $entityManager->detach($item['product']);
             }
 

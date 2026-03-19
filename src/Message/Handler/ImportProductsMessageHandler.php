@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Message\Handler;
 
 use App\Entity\ImportJob;
+use App\Event\ImportCompletedEvent;
 use App\Message\ImportProductsMessage;
 use App\Service\ImportJobService;
 use App\Service\ImportLogService;
@@ -17,6 +18,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Throwable;
 
@@ -33,6 +35,7 @@ readonly class ImportProductsMessageHandler
         private ProductValidator $productValidator,
         private ImportSourceDetector $sourceDetector,
         private LoggerInterface $logger,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -62,11 +65,14 @@ readonly class ImportProductsMessageHandler
                 $reader,
                 $this->logger,
                 $this->importLogService,
+                $this->eventDispatcher,
             );
 
             $result = $importService->import($message->source, $job, $message->dryRun);
 
             $this->jobService->updateJobResults($job, $result);
+
+            $this->eventDispatcher->dispatch(new ImportCompletedEvent($job, $result));
 
             $this->logger->info('Import completed', [
                 'jobId' => $message->jobId,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Entity\ImportJob;
+use App\Event\ProductImportedEvent;
 use App\Interface\ImportReaderInterface;
 use App\Service\ImportLogService;
 use App\Service\ProductImportService;
@@ -16,6 +17,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ProductImportServiceTest extends TestCase
 {
@@ -27,6 +29,8 @@ class ProductImportServiceTest extends TestCase
 
     private ImportLogService&Stub $importLogService;
 
+    private EventDispatcherInterface $eventDispatcher;
+
     private ImportReaderInterface $reader;
 
     private string $tmpDir;
@@ -37,6 +41,7 @@ class ProductImportServiceTest extends TestCase
         $this->managerRegistry = $this->createStub(ManagerRegistry::class);
         $this->productValidator = $this->createStub(ProductValidator::class);
         $this->importLogService = $this->createStub(ImportLogService::class);
+        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $this->reader = new CsvImportReader(new NullLogger());
         $this->tmpDir = sys_get_temp_dir();
 
@@ -51,6 +56,7 @@ class ProductImportServiceTest extends TestCase
             $this->reader,
             new NullLogger(),
             $this->importLogService,
+            $this->eventDispatcher,
         );
     }
 
@@ -89,7 +95,6 @@ class ProductImportServiceTest extends TestCase
         $this->assertSame(2, $result->total());
     }
 
-    #[AllowMockObjectsWithoutExpectations]
     public function testCountsFailedRowsOnValidationError(): void
     {
         $path = $this->writeCsv("name,sku,price\n,INVALID,bad\n");
@@ -161,5 +166,34 @@ class ProductImportServiceTest extends TestCase
         $this->assertSame(2, $result->total());
         $this->assertSame(1, $result->processed);
         $this->assertSame(1, $result->skipped);
+    }
+
+    public function testDispatchesProductImportedEventForEachProduct(): void
+    {
+        $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\nWidget B,SKU-002,19.99\n");
+
+        $this->productValidator->method('validate')->willReturn([]);
+        $this->productValidator->method('isSkuTaken')->willReturn(false);
+        $this->entityManager->expects($this->exactly(2))->method('persist');
+        $this->entityManager->expects($this->once())->method('flush');
+
+        // Create mock for this test to verify event dispatch
+        $mockDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $mockDispatcher->expects($this->exactly(2))
+            ->method('dispatch')
+            ->with($this->isInstanceOf(ProductImportedEvent::class));
+
+        $service = new ProductImportService(
+            $this->managerRegistry,
+            $this->productValidator,
+            $this->reader,
+            new NullLogger(),
+            $this->importLogService,
+            $mockDispatcher,
+        );
+
+        $result = $service->import($path, $this->makeJob());
+
+        $this->assertSame(2, $result->processed);
     }
 }
