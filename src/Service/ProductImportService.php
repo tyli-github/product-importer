@@ -29,12 +29,7 @@ class ProductImportService
     ) {
     }
 
-    public function import(
-        string $filePath,
-        ImportJob $job,
-        bool $dryRun = false,
-        ?callable $onProgress = null
-    ): ImportResult
+    public function import(string $filePath, ImportJob $job, bool $dryRun = false): ImportResult
     {
         $processed = 0;
         $failed = 0;
@@ -43,10 +38,7 @@ class ProductImportService
         $context = new ProductImportContext($dryRun);
 
         foreach ($this->reader->read($filePath) as $rowNumber => $row) {
-            if ($onProgress !== null) {
-                ($onProgress)();
-            }
-
+            // product DTO: used to simplify data handling for this class
             $importRow = new ProductImportRow($rowNumber, $row, $this->mapRowToProduct($row));
 
             $decision = $this->prepareRowDecision($importRow, $job, $context);

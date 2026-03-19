@@ -23,6 +23,8 @@ class ImportJob
 
     public const string STATUS_RUNNING = 'running';
 
+    public const string STATUS_PENDING = 'pending';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

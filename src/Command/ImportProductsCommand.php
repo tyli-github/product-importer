@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Interface\ImportReaderInterface;
+use App\Message\ImportProductsMessage;
 use App\Service\ImportJobService;
-use App\Service\ImportLogService;
-use App\Service\ProductImportService;
-use App\Service\ProductValidator;
-use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
+use App\Service\ImportSourceDetector;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsCommand(
     name: 'import:products',
@@ -31,10 +27,8 @@ class ImportProductsCommand extends Command
         #[AutowireIterator('import.reader')]
         private readonly iterable $readers,
         private readonly ImportJobService $jobService,
-        private readonly ImportLogService $importLogService,
-        private readonly ManagerRegistry $managerRegistry,
-        private readonly ProductValidator $productValidator,
-        private readonly LoggerInterface $logger
+        private readonly ImportSourceDetector $sourceDetector,
+        private readonly MessageBusInterface $messageBus,
     ) {
         parent::__construct();
     }
@@ -53,8 +47,7 @@ class ImportProductsCommand extends Command
         $source = $input->getArgument('file');
         $dryRun = $input->getOption('dry-run');
 
-        $reader = $this->resolveReader($source);
-
+        $reader = $this->sourceDetector->detect($source, $this->readers);
         if ($reader === null) {
             $io->error(sprintf('No reader supports the source: %s', $source));
 
@@ -63,60 +56,15 @@ class ImportProductsCommand extends Command
 
         $job = $this->jobService->createJob($source, $reader->getSourceType());
 
-        $io->info(sprintf('Starting import (Job ID: %d)', $job->getId()));
+        $this->messageBus->dispatch(new ImportProductsMessage(
+            jobId: $job->getId(),
+            source: $source,
+            dryRun: $dryRun,
+        ));
 
-        $importService = new ProductImportService(
-            $this->managerRegistry,
-            $this->productValidator,
-            $reader,
-            $this->logger,
-            $this->importLogService,
-        );
-
-        $progress = new ProgressBar($output);
-        $progress->start();
-
-        $result = $importService->import($source, $job, $dryRun, fn() => $progress->advance());
-
-        $progress->finish();
-        $output->writeln('');
-
-        $this->jobService->updateJobResults($job, $result);
-
-        $io->table(
-            ['Metric', 'Count'],
-            [
-                ['Total Rows', $result->total()],
-                ['Processed', $result->processed],
-                ['Failed', $result->failed],
-                ['Skipped', $result->skipped],
-            ]
-        );
-
-        if ($dryRun) {
-            $io->warning('Dry run mode - no data persisted');
-        }
-
-        if ($result->failed > 0) {
-            $io->warning(sprintf('%d rows failed validation', $result->failed));
-
-            return Command::FAILURE;
-        }
-
-        $io->success('Import completed successfully');
+        $io->success(sprintf('Import queued (Job ID: %d)', $job->getId()));
+        $io->info('Run: php bin/console messenger:consume async');
 
         return Command::SUCCESS;
-    }
-
-    private function resolveReader(string $source,): ?ImportReaderInterface
-    {
-        /** @var ImportReaderInterface $reader */
-        foreach ($this->readers as $reader) {
-            if ($reader->supports($source)) {
-                return $reader;
-            }
-        }
-
-        return null;
     }
 }

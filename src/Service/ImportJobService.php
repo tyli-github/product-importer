@@ -19,7 +19,7 @@ readonly class ImportJobService
     {
         $job = new ImportJob();
         $job->setName(basename($filePath));
-        $job->setStatus(ImportJob::STATUS_RUNNING);
+        $job->setStatus(ImportJob::STATUS_PENDING);
         $job->setSourceType($sourceType);
         $job->setFilePath($filePath);
 

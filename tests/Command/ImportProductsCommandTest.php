@@ -42,7 +42,7 @@ class ImportProductsCommandTest extends KernelTestCase
         return $path;
     }
 
-    public function testImportsValidCsv(): void
+    public function testQueuesImportJob(): void
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\nWidget B,SKU-002,19.99\n");
 
@@ -50,15 +50,14 @@ class ImportProductsCommandTest extends KernelTestCase
 
         $this->assertSame(0, $code);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Import completed successfully', $output);
-        $this->assertStringContainsString('Processed', $output);
+        $this->assertStringContainsString('Import queued', $output);
 
         $jobs = $this->jobRepository->findAll();
         $this->assertCount(1, $jobs);
         $job = $jobs[0];
-        $this->assertSame('completed', $job->getStatus());
-        $this->assertSame(2, $job->getProcessedRows());
-        $this->assertNotNull($job->getCompletedAt());
+        $this->assertSame('pending', $job->getStatus());
+        $this->assertNull($job->getProcessedRows());
+        $this->assertNull($job->getCompletedAt());
     }
 
     public function testFailsOnMissingFile(): void
@@ -69,23 +68,31 @@ class ImportProductsCommandTest extends KernelTestCase
         $this->assertStringContainsString('No reader supports the source', $this->commandTester->getDisplay());
     }
 
-    public function testDryRunDoesNotPersistProducts(): void
+    public function testDryRunQueuesWithDryRunFlag(): void
     {
         $path = $this->writeCsv("name,sku,price\nWidget A,SKU-001,9.99\n");
 
         $code = $this->commandTester->execute(['file' => $path, '--dry-run' => true]);
 
         $this->assertSame(0, $code);
-        $this->assertStringContainsString('Dry run mode', $this->commandTester->getDisplay());
+        $this->assertStringContainsString('Import queued', $this->commandTester->getDisplay());
+
+        $jobs = $this->jobRepository->findAll();
+        $this->assertCount(1, $jobs);
+        $this->assertSame('pending', $jobs[0]->getStatus());
     }
 
-    public function testFailsOnValidationErrors(): void
+    public function testQueuesJobWithInvalidData(): void
     {
         $path = $this->writeCsv("name,sku,price\n,INVALID,bad\n");
 
         $code = $this->commandTester->execute(['file' => $path]);
 
-        $this->assertSame(1, $code);
-        $this->assertStringContainsString('failed validation', $this->commandTester->getDisplay());
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('Import queued', $this->commandTester->getDisplay());
+
+        $jobs = $this->jobRepository->findAll();
+        $this->assertCount(1, $jobs);
+        $this->assertSame('pending', $jobs[0]->getStatus());
     }
 }
