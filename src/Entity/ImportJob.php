@@ -17,6 +17,10 @@ class ImportJob
 
     public const string SOURCE_TYPE_HTTP = 'http';
 
+    public const string SOURCE_TYPE_XML = 'xml';
+
+    public const string SOURCE_TYPE_YAML = 'yaml';
+
     public const string STATUS_COMPLETED = 'completed';
 
     public const string STATUS_FAILED = 'failed';
