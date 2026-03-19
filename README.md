@@ -122,3 +122,21 @@ php bin/console messenger:consume async --limit=1
 # Prod: continuous processing (use supervisor/systemd to keep running)
 php bin/console messenger:consume async
 ```
+
+## License & Usage
+
+This project is provided as a **portfolio demonstration** for evaluation and learning purposes only.
+
+**You may:**
+- Review and study the source code
+- Use it for personal learning and educational purposes
+- Reference implementation patterns
+
+**You may not:**
+- Use commercially without written permission
+- Redistribute, share, or copy the code
+- Create derivative works for commercial purposes
+
+For licensing inquiries or commercial use, contact the author.
+
+See [LICENSE](LICENSE) and [NOTICE](NOTICE) for full terms.
