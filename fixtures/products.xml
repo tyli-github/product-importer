@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<products>
+    <product>
+        <name>Logitech G Pro X Superlight 2</name>
+        <sku>MOUSE-GPX-SL2-001</sku>
+        <price>159.99</price>
+        <description>Ultra-lightweight wireless gaming mouse 60g with HERO 25K sensor</description>
+        <category>Peripherals</category>
+        <stock>34</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Razer DeathAdder V3 HyperSpeed</name>
+        <sku>MOUSE-DAV3-HS-001</sku>
+        <price>99.99</price>
+        <description>Ergonomic wireless gaming mouse with Focus Pro 30K optical sensor</description>
+        <category>Peripherals</category>
+        <stock>21</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Zowie EC2-CW</name>
+        <sku>MOUSE-ZOWIE-EC2CW-001</sku>
+        <price>129.99</price>
+        <description>Wireless ergonomic esports mouse with 3200 DPI and plug-and-play</description>
+        <category>Peripherals</category>
+        <stock>17</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Wooting 60HE+</name>
+        <sku>KB-WOOT-60HE-001</sku>
+        <price>174.99</price>
+        <description>Analog Hall Effect 60% gaming keyboard with rapid trigger technology</description>
+        <category>Peripherals</category>
+        <stock>9</stock>
+        <status>low_stock</status>
+    </product>
+    <product>
+        <name>Keychron Q3 Max</name>
+        <sku>KB-KEYCH-Q3MAX-001</sku>
+        <price>199.99</price>
+        <description>Wireless TKL aluminum mechanical keyboard with QMK/VIA support</description>
+        <category>Peripherals</category>
+        <stock>26</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Ducky One 3 Mini</name>
+        <sku>KB-DUCKY-ONE3M-001</sku>
+        <price>109.99</price>
+        <description>60% hot-swap mechanical keyboard with double-shot PBT keycaps</description>
+        <category>Peripherals</category>
+        <stock>38</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Logitech G840 XL</name>
+        <sku>PAD-G840XL-001</sku>
+        <price>49.99</price>
+        <description>Extended gaming mousepad 900x400mm with consistent surface texture</description>
+        <category>Peripherals</category>
+        <stock>55</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Artisan Hayate Otsu XL</name>
+        <sku>PAD-ARTISAN-HOXL-001</sku>
+        <price>69.99</price>
+        <description>Premium Japanese XL mousepad with mid-glide hybrid surface</description>
+        <category>Peripherals</category>
+        <stock>14</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>Pulsar ES2 Large</name>
+        <sku>PAD-PULSAR-ES2L-001</sku>
+        <price>34.99</price>
+        <description>Hard surface gaming mousepad with non-slip rubber base</description>
+        <category>Peripherals</category>
+        <stock>41</stock>
+        <status>active</status>
+    </product>
+    <product>
+        <name>ASUS ROG Strix Scope II 96</name>
+        <sku>KB-ROG-SCOPE96-001</sku>
+        <price>139.99</price>
+        <description>96% layout wireless mechanical keyboard with ROG NX switches</description>
+        <category>Peripherals</category>
+        <stock>19</stock>
+        <status>active</status>
+    </product>
+</products>

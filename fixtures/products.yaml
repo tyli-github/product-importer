@@ -1,0 +1,79 @@
+- name: SteelSeries Arctis Nova Pro Wireless
+  sku: AUDIO-ARCTIS-NPW-001
+  price: 349.99
+  description: Dual-wireless multi-system gaming headset with active noise cancellation
+  category: Audio
+  stock: 13
+  status: active
+
+- name: Beyerdynamic DT 900 Pro X
+  sku: AUDIO-DT900PX-001
+  price: 299.99
+  description: Open-back studio reference headphones 48 Ohm for mixing and mastering
+  category: Audio
+  stock: 8
+  status: low_stock
+
+- name: HyperX Cloud Alpha Wireless
+  sku: AUDIO-HYPCLD-AW-001
+  price: 199.99
+  description: Wireless gaming headset with 300-hour battery life and dual-chamber drivers
+  category: Audio
+  stock: 27
+  status: active
+
+- name: Elgato Wave 3
+  sku: AUDIO-ELGW3-001
+  price: 149.99
+  description: USB condenser microphone with 24-bit/96kHz audio and capacitive mute
+  category: Audio
+  stock: 31
+  status: active
+
+- name: Blue Yeti X
+  sku: AUDIO-BLUEYETI-X-001
+  price: 129.99
+  description: USB condenser microphone with multi-pattern pickup and LED metering
+  category: Audio
+  stock: 22
+  status: active
+
+- name: Elgato 4K X Capture Card
+  sku: CAP-ELGA4KX-001
+  price: 199.99
+  description: 4K60 HDR10 passthrough PCIe capture card for streaming and recording
+  category: Capture Cards
+  stock: 16
+  status: active
+
+- name: AVerMedia Live Gamer 4K
+  sku: CAP-AVERM-LG4K-001
+  price: 179.99
+  description: 4K30 / 1080p240 PCIe capture card with HDR and VRR support
+  category: Capture Cards
+  stock: 11
+  status: active
+
+- name: Anker 655 USB-C Hub 8-in-1
+  sku: HUB-ANKER655-001
+  price: 49.99
+  description: 8-in-1 USB-C hub with 100W PD 4K HDMI SD card reader and Ethernet
+  category: Accessories
+  stock: 63
+  status: active
+
+- name: CalDigit TS4 Thunderbolt 4 Dock
+  sku: HUB-CALDIG-TS4-001
+  price: 349.99
+  description: Thunderbolt 4 dock with 18 ports including 2.5GbE and 98W host charging
+  category: Accessories
+  stock: 7
+  status: low_stock
+
+- name: Sabrent USB 3.2 10-Port Hub
+  sku: HUB-SABRENT-10P-001
+  price: 39.99
+  description: 10-port USB 3.2 hub with individual power switches and 60W adapter
+  category: Accessories
+  stock: 48
+  status: active

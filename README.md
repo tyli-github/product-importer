@@ -21,6 +21,8 @@ docker-compose up -d
 php bin/console doctrine:migrations:migrate
 ```
 
+Example data files are in `fixtures/` — ready to import for testing.
+
 ### Import Data (Async)
 
 Imports are processed asynchronously via Symfony Messenger. Two-step workflow:
@@ -28,10 +30,10 @@ Imports are processed asynchronously via Symfony Messenger. Two-step workflow:
 **Step 1: Queue the import**
 ```bash
 # CSV example
-php bin/console import:products var/share/products.csv
+php bin/console import:products fixtures/products.csv
 
 # JSON example (additional PC parts dataset)
-php bin/console import:products var/share/products.json
+php bin/console import:products fixtures/products.json
 ```
 Output:
 ```
@@ -60,7 +62,10 @@ php bin/console import:status 1
 
 ```bash
 # Dry-run: validate without importing
-php bin/console import:products var/share/products.csv --dry-run
+php bin/console import:products fixtures/products.csv --dry-run
+
+# Update mode: overwrite existing SKUs instead of skipping
+php bin/console import:products fixtures/products.csv --allow-updates
 
 # Export to CSV or JSON (default output: var/share/export/)
 php bin/console import:export --format=csv
@@ -69,8 +74,10 @@ php bin/console import:export --format=json --category="Graphics Cards"
 # Cleanup old jobs (30 days default)
 php bin/console import:cleanup --older-than=30
 
-# Import from HTTP URL
+# Supported formats: CSV, JSON, XML, YAML (file), HTTP (CSV/JSON)
 php bin/console import:products https://example.com/products.csv
+php bin/console import:products fixtures/products.xml
+php bin/console import:products fixtures/products.yaml
 ```
 
 ## Testing

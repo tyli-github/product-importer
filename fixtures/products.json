@@ -1,0 +1,164 @@
+[
+    {
+        "name": "NVIDIA RTX 4070",
+        "sku": "GPU-RTX4070-001",
+        "price": 549.99,
+        "description": "NVIDIA GeForce RTX 4070 12GB GDDR6X mid-range gaming GPU",
+        "category": "Graphics Cards",
+        "stock": 16,
+        "status": "active"
+    },
+    {
+        "name": "AMD Radeon RX 7900 XTX",
+        "sku": "GPU-RX7900XTX-001",
+        "price": 699.99,
+        "description": "AMD Radeon RX 7900 XTX 24GB GDDR6 high-end RDNA 3 GPU",
+        "category": "Graphics Cards",
+        "stock": 7,
+        "status": "active"
+    },
+    {
+        "name": "Intel Core i7-14700K",
+        "sku": "CPU-I7-14700K-001",
+        "price": 419.99,
+        "description": "Intel Core i7-14700K 20-core unlocked processor",
+        "category": "Processors",
+        "stock": 14,
+        "status": "active"
+    },
+    {
+        "name": "AMD Ryzen 7 7700X",
+        "sku": "CPU-R7-7700X-001",
+        "price": 299.99,
+        "description": "AMD Ryzen 7 7700X 8-core Zen 4 socket AM5 processor",
+        "category": "Processors",
+        "stock": 19,
+        "status": "active"
+    },
+    {
+        "name": "G.Skill Trident Z5 RGB 32GB",
+        "sku": "RAM-TRIDENT-Z5-32GB-001",
+        "price": 189.99,
+        "description": "DDR5-6000 32GB (2x16GB) ultra-high-speed gaming RAM",
+        "category": "Memory",
+        "stock": 21,
+        "status": "active"
+    },
+    {
+        "name": "Kingston Fury Beast 64GB",
+        "sku": "RAM-FURY-BEAST-64GB-001",
+        "price": 279.99,
+        "description": "DDR5-5600 64GB (2x32GB) solid gaming memory kit",
+        "category": "Memory",
+        "stock": 8,
+        "status": "low_stock"
+    },
+    {
+        "name": "Crucial P5 Plus 2TB",
+        "sku": "SSD-P5PLUS-2TB-001",
+        "price": 139.99,
+        "description": "PCIe 4.0 NVMe SSD 2TB with 6600MB/s read speed",
+        "category": "Storage",
+        "stock": 28,
+        "status": "active"
+    },
+    {
+        "name": "SK Hynix Platinum P41 1TB",
+        "sku": "SSD-P41-1TB-001",
+        "price": 109.99,
+        "description": "PCIe 4.0 NVMe SSD 1TB premium performance drive",
+        "category": "Storage",
+        "stock": 33,
+        "status": "active"
+    },
+    {
+        "name": "MSI Z890 ACE",
+        "sku": "MB-Z890-ACE-001",
+        "price": 379.99,
+        "description": "Intel Z890 LGA1851 socket premium ATX motherboard",
+        "category": "Motherboards",
+        "stock": 11,
+        "status": "active"
+    },
+    {
+        "name": "ASRock X870-E Steel Legend",
+        "sku": "MB-X870E-LEGEND-001",
+        "price": 429.99,
+        "description": "AMD X870-E socket AM5 premium ATX motherboard with WiFi 7",
+        "category": "Motherboards",
+        "stock": 9,
+        "status": "active"
+    },
+    {
+        "name": "be quiet! Dark Rock Pro 4",
+        "sku": "COOLER-DRKRK-PRO4-001",
+        "price": 89.99,
+        "description": "Premium dual-tower air cooler with 250W TDP support",
+        "category": "Cooling",
+        "stock": 32,
+        "status": "active"
+    },
+    {
+        "name": "Scythe Fuma 3 LGA",
+        "sku": "COOLER-FUMA3-001",
+        "price": 64.99,
+        "description": "Budget-friendly dual-tower air cooler for LGA/AM5",
+        "category": "Cooling",
+        "stock": 51,
+        "status": "active"
+    },
+    {
+        "name": "Seasonic Focus Plus 850W",
+        "sku": "PSU-FOCUS-850-001",
+        "price": 119.99,
+        "description": "850W 80+ Gold modular power supply with 10-year warranty",
+        "category": "Power Supplies",
+        "stock": 24,
+        "status": "active"
+    },
+    {
+        "name": "MSI A1000G PCIE5 1000W",
+        "sku": "PSU-MSI-A1000G-001",
+        "price": 189.99,
+        "description": "1000W 80+ Gold fully modular with PCIe 5.0 support",
+        "category": "Power Supplies",
+        "stock": 15,
+        "status": "active"
+    },
+    {
+        "name": "NZXT H7 Flow RGB",
+        "sku": "CASE-H7-FLOW-001",
+        "price": 139.99,
+        "description": "Modern ATX case with excellent airflow and RGB fans",
+        "category": "Cases",
+        "stock": 18,
+        "status": "active"
+    },
+    {
+        "name": "Corsair 4000D Airflow",
+        "sku": "CASE-4000D-001",
+        "price": 104.99,
+        "description": "Budget-friendly ATX case with front panel airflow",
+        "category": "Cases",
+        "stock": 26,
+        "status": "active"
+    },
+    {
+        "name": "BenQ PD2705U",
+        "sku": "MONITOR-PD2705U-001",
+        "price": 599.99,
+        "description": "27-inch 4K USB-C professional monitor with 90W power delivery",
+        "category": "Monitors",
+        "stock": 6,
+        "status": "active"
+    },
+    {
+        "name": "LG UltraGear 27GN950-B",
+        "sku": "MONITOR-27GN950-001",
+        "price": 499.99,
+        "description": "27-inch 1440p 240Hz gaming monitor with nano IPS",
+        "category": "Monitors",
+        "stock": 12,
+        "status": "active"
+    }
+]

@@ -29,7 +29,7 @@ class ImportExportCommand extends Command
     {
         $this
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format: csv or json', 'csv')
-            ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output file path (default: var/share/products.<format>)')
+            ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output file path (default: var/share/export/products.<format>)')
             ->addOption('category', null, InputOption::VALUE_REQUIRED, 'Filter by category')
             ->addOption('status', null, InputOption::VALUE_REQUIRED, 'Filter by status');
     }
