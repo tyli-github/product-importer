@@ -15,128 +15,116 @@ Built with Doctrine ORM, PostgreSQL, and Symfony Messenger for async processing.
 
 ### Initial Setup
 
+**1. Install dependencies**
 ```bash
 composer install
+```
+
+**2. Configure environment** (`.env.local`, gitignored):
+```env
+DATABASE_URL="postgresql://<user>:<password>@127.0.0.1:5432/product_importer?serverVersion=16&charset=utf8"
+POSTGRES_DB=product_importer
+POSTGRES_USER=<user>
+POSTGRES_PASSWORD=<password>
+```
+
+**3. Configure Docker** (`.compose.override.yaml`, gitignored, auto-loaded):
+```yaml
+services:
+  database:
+    environment:
+      POSTGRES_DB: product_importer
+      POSTGRES_USER: <user>
+      POSTGRES_PASSWORD: <password>
+    ports:
+      - "5432:5432"
+```
+
+**4. Start Docker & initialize database**
+```bash
 docker-compose up -d
-php bin/console doctrine:migrations:migrate
+php ./bin/console doctrine:migrations:migrate
 ```
 
-Example data files are in `fixtures/` — ready to import for testing.
+### Import Data
 
-### Import Data (Async)
-
-Imports are processed asynchronously via Symfony Messenger. Two-step workflow:
-
-**Step 1: Queue the import**
+**Step 1: Queue import** (fixtures available in `fixtures/`)
 ```bash
-# CSV example
-php bin/console import:products fixtures/products.csv
-
-# JSON example (additional PC parts dataset)
-php bin/console import:products fixtures/products.json
-```
-Output:
-```
-✓ Import queued (Job ID: 1)
-  Run: php bin/console messenger:consume async
+php ./bin/console import:products fixtures/products.csv
+php ./bin/console import:products fixtures/products.json
 ```
 
-**Step 2: Consume the queue** (in a separate terminal/worker)
+**Step 2: Consume queue** (separate terminal)
 ```bash
-php bin/console messenger:consume async
+php ./bin/console messenger:consume async
 ```
 
-The worker processes messages in the queue and persists data to the database.
-
-### Monitor Job Status
+### Monitor Jobs
 
 ```bash
-# List recent jobs
-php bin/console import:status
-
-# View specific job (with logs)
-php bin/console import:status 1
+php ./bin/console import:status      # list recent
+php ./bin/console import:status 1    # view job 1
 ```
 
 ### Optional Commands
 
 ```bash
-# Dry-run: validate without importing
-php bin/console import:products fixtures/products.csv --dry-run
+php ./bin/console import:products fixtures/products.csv --dry-run      # validate only
+php ./bin/console import:products fixtures/products.csv --allow-updates # overwrite existing SKUs
 
-# Update mode: overwrite existing SKUs instead of skipping
-php bin/console import:products fixtures/products.csv --allow-updates
+php ./bin/console import:export --format=csv                 # export to var/share/export/
+php ./bin/console import:export --format=json --category=PC  # filter by category
 
-# Export to CSV or JSON (default output: var/share/export/)
-php bin/console import:export --format=csv
-php bin/console import:export --format=json --category="Graphics Cards"
+php ./bin/console import:cleanup --older-than=30             # delete jobs older than 30 days
 
-# Cleanup old jobs (30 days default)
-php bin/console import:cleanup --older-than=30
-
-# Supported formats: CSV, JSON, XML, YAML (file), HTTP (CSV/JSON)
-php bin/console import:products https://example.com/products.csv
-php bin/console import:products fixtures/products.xml
-php bin/console import:products fixtures/products.yaml
+php ./bin/console import:products https://example.com/products.csv  # CSV, JSON, XML, YAML, HTTP
+php ./bin/console import:products fixtures/products.xml
 ```
 
 ## Testing
 
-### One-time setup
+### Setup (one-time)
 
-Create `.env.test.local` (gitignored) with credentials for a dedicated test database:
-
-```dotenv
-DATABASE_URL="postgresql://<user>:<pass>@127.0.0.1:5432/product_importer_test?serverVersion=16&charset=utf8"
+**1. Create `.env.test.local`** (same credentials, `product_importer_test` database):
+```env
+DATABASE_URL="postgresql://<user>:<password>@127.0.0.1:5432/product_importer_test?serverVersion=16&charset=utf8"
 ```
 
-Create the test database and run migrations:
-
+**2. Create a test database & run migrations**:
 ```bash
 docker-compose exec database psql -U <user> -d product_importer -c "CREATE DATABASE product_importer_test;"
-APP_ENV=test php bin/console doctrine:migrations:migrate --no-interaction
+APP_ENV=test php ./bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 ### Running tests
 
 ```bash
-vendor/bin/phpunit                        # all tests
-vendor/bin/phpunit tests/Service/         # unit tests only
-vendor/bin/phpunit tests/Command/         # integration tests only
-vendor/bin/phpunit tests/Message/         # message handler tests
+./vendor/bin/phpunit                  # all tests
+./vendor/bin/phpunit tests/Service/   # unit tests only
+./vendor/bin/phpunit tests/Command/   # integration tests only
+./vendor/bin/phpunit tests/Message/   # message handler tests
+```
+
+**Code Coverage** (requires [Xdebug](https://xdebug.org/) or [PCOV](https://pecl.php.net/package/pcov)):
+```bash
+php -m | grep -E 'Xdebug|pcov'  # check if installed
+XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html coverage/  # HTML report (if available)
 ```
 
 ## How It Works
 
-**Async Pipeline**: Command → Queue (Doctrine transport) → Worker → Handler → Database
+**Pipeline**: Command → Queue (Doctrine) → Worker → Handler → Database
 
-- Job status lifecycle: `pending` → `running` → `completed/failed`
-- Retries on failure: 3 attempts with 2x exponential backoff
-- Messages stored in `messenger_messages` table; monitor with `import:status`
+- Statuses: `pending` → `running` → `completed/failed`
+- 3 retries with 2x backoff on failure
+- `messenger_messages` table: Messages inserted on queue, deleted after processing (empty = successfully consumed)
 
-**Worker Modes**:
+**Worker**:
 ```bash
-# Dev: process one message, exit
-php bin/console messenger:consume async --limit=1
-
-# Prod: continuous processing (use supervisor/systemd to keep running)
-php bin/console messenger:consume async
+php ./bin/console messenger:consume async --limit=1  # dev (one message, exit)
+php ./bin/console messenger:consume async            # prod (continuous)
 ```
 
-## License & Usage
+## License
 
-This project is provided as a **portfolio demonstration** for evaluation and learning purposes only.
-
-**You may:**
-- Review and study the source code
-- Use it for personal learning and educational purposes
-- Reference implementation patterns
-
-**You may not:**
-- Use commercially without written permission
-- Redistribute, share, or copy the code
-- Create derivative works for commercial purposes
-
-For licensing inquiries or commercial use, contact the author.
-
-See [LICENSE](LICENSE) and [NOTICE](NOTICE) for full terms.
+Portfolio demonstration for evaluation and learning only. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for full terms.

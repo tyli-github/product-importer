@@ -56,5 +56,9 @@ compose.override.yml
 docker-compose.override.yaml
 docker-compose.override.yml
 
+# Generated files
+/config/reference.php
+/config/preload.php
+
 # Custom
 docs
