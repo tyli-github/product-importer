@@ -62,3 +62,4 @@ docker-compose.override.yml
 
 # Custom
 docs
+.env.dev
